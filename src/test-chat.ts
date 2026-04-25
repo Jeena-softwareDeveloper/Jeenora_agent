@@ -12,7 +12,9 @@ async function testChat() {
   };
 
   try {
-    const stream = await graph.stream(initialState);
+    const stream = await graph.stream(initialState, {
+      configurable: { thread_id: "test-user" },
+    });
 
     for await (const step of stream) {
       const nodeName = Object.keys(step)[0];
