@@ -6,43 +6,34 @@ import { seoAudit } from "../tools/seoAudit";
 /**
  * SEO Agent (Expert)
  * Responsibility: Analyzes websites and content for SEO optimization.
+ * Now smarter: Starts audit automatically if a URL is found.
  */
 export async function seoAgent(state: AgentStateType) {
-  console.log("--- 📊 SEO AGENT IS AUDITING ---");
+  console.log("--- 📊 SEO AGENT IS ANALYZING ---");
   
-  const leads = state.leads;
-  let auditReport = "";
-
-  // If there's a lead with a URL, let's audit it!
-  const urlRegex = /(https?:\/\/[^\s]+)/g;
   const lastMsgContent = state.messages[state.messages.length - 1].content.toString();
+  const urlRegex = /(https?:\/\/[^\s]+|jeenora\.com[^\s]*)/gi;
   const foundUrls = lastMsgContent.match(urlRegex) || [];
 
-  // Also check leads for URLs
-  leads.forEach(lead => {
-    const urls = lead.match(urlRegex);
-    if (urls) foundUrls.push(...urls);
-  });
+  let auditReport = "";
+  let targetUrl = foundUrls[0] || "https://jeenora.com"; // Default to jeenora.com if any hint is there
 
-  if (foundUrls.length > 0) {
-    const targetUrl = foundUrls[0];
-    console.log(`🔎 Found URL to audit: ${targetUrl}`);
+  // If the user mentioned "jeenora" or provided a URL, JUST START THE AUDIT
+  if (lastMsgContent.toLowerCase().includes("jeenora") || foundUrls.length > 0) {
+    console.log(`🔎 Automatically auditing: ${targetUrl}`);
     const results = await seoAudit(targetUrl);
     auditReport = `\nSEO Audit for ${targetUrl}:\n${JSON.stringify(results, null, 2)}`;
   }
 
   const systemPrompt = `
     You are the SEO Expert for Jeenora.com. 
-    Review the following data and provide a professional SEO strategy.
     
-    Technical Data: ${auditReport || "No direct URL provided for audit."}
+    If you have Audit Data, summarize it and provide 3 high-impact keywords and an action plan.
+    If you don't have enough data, do NOT keep asking 3 questions. Just make a best-guess strategy for Jeenora.com.
     
-    Tasks:
-    1. Summarize the technical findings.
-    2. Suggest 3 high-impact keywords.
-    3. Provide actionable advice to improve ranking.
+    Audit Data: ${auditReport || "No direct URL scan yet, providing general strategy for Jeenora.com."}
     
-    Always represent Jeenora.com's premium standards.
+    Represent Jeenora.com's premium standards. Be professional and direct.
   `;
 
   const response = await model.invoke([

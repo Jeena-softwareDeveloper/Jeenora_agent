@@ -21,13 +21,12 @@ export async function ceo(state: AgentStateType) {
     1. Speak ONLY in TANGLISH (Tamil + English mix).
     2. Be EXTREMELY BRIEF (1 line only).
     3. If user says Hi/Hello/General chat: Respond shortly and end with "Next: FINISH".
-    4. If user asks for a complex task, deep analysis, or direct web action (indexing, logging in, fixing routes):
-       - "Next: deepThinker"
-    5. If user asks for standard flow:
-       - No leads yet? "Next: leadAgent"
-       - Has leads, no research? "Next: researcher"
-       - Has research, no SEO? "Next: seoAgent"
-       - Has SEO, no code? "Next: seniorDeveloper"
+    4. If user asks for a task or mentions a topic (leads, seo, code, etc.):
+       - Just delegate to the right agent immediately. 
+       - No leads? "Next: leadAgent"
+       - SEO mentioned? "Next: seoAgent"
+       - Code/Technical? "Next: seniorDeveloper"
+       - Complex web action? "Next: deepThinker"
        - Done? "Next: FINISH"
     
     Don't summarize or explain. Just delegate or greet.
