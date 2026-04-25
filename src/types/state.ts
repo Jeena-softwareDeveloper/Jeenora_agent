@@ -25,6 +25,10 @@ export const AgentState = Annotation.Root({
     reducer: (x, y) => y ?? x,
     default: () => "",
   }),
+  thinkingLogs: Annotation<string[]>({
+    reducer: (x, y) => x.concat(y),
+    default: () => [],
+  }),
   next: Annotation<string>({
     reducer: (x, y) => y ?? x,
     default: () => "ceo",
