@@ -29,30 +29,47 @@ export class TelegramService {
           messages: [new HumanMessage(userMessage)],
         };
 
-        // 2. Stream the graph to track agent transitions
         const stream = await graph.stream(initialState, {
           configurable: { thread_id: ctx.chat.id.toString() },
         });
 
         let lastNodeStatusMsgId: number | null = null;
+        let logs: string[] = [];
 
         for await (const step of stream) {
           const nodeName = Object.keys(step)[0];
+          const nodeOutput = step[nodeName];
 
-          // Delete previous status message if exists
+          // 1. Build a log message
+          let currentLog = "";
+          if (nodeName === "ceo") {
+            currentLog = `🤵 *CEO Decision:* Calling [${nodeOutput.next.toUpperCase()}]`;
+          } else if (nodeName === "leadAgent") {
+            currentLog = `🔍 *LeadAgent:* Searching for business contacts...`;
+          } else if (nodeName === "seoAgent") {
+            currentLog = `📊 *SeoAgent:* Auditing website metadata...`;
+          } else if (nodeName === "deepThinker") {
+            currentLog = `🧠 *DeepThinker:* Autonomous planning & execution...`;
+          } else {
+            currentLog = `⚙️ *Processing:* [${nodeName.toUpperCase()}]`;
+          }
+          
+          logs.push(currentLog);
+
+          // 2. Update status message (Show logs)
+          const displayLog = `🤖 *System Operations:*\n` + logs.map(l => `> ${l}`).join("\n");
+          
           if (lastNodeStatusMsgId) {
-            try { await ctx.deleteMessage(lastNodeStatusMsgId); } catch (e) {}
+            try { await ctx.telegram.editMessageText(ctx.chat.id, lastNodeStatusMsgId, undefined, displayLog, { parse_mode: "Markdown" }); } catch (e) {}
+          } else {
+            const statusMsg = await ctx.replyWithMarkdown(displayLog);
+            lastNodeStatusMsgId = statusMsg.message_id;
           }
 
-          // Show which agent is currently working (Show and then it will be hidden in next step)
-          const statusMsg = await ctx.reply(`⚙️ Working: [${nodeName.toUpperCase()}] ...`);
-          lastNodeStatusMsgId = statusMsg.message_id;
-
-          // Also keep the typing indicator active for long tasks
           await ctx.sendChatAction("typing");
         }
 
-        // Final cleanup of status message
+        // 3. Cleanup logs before showing final result
         if (lastNodeStatusMsgId) {
           try { await ctx.deleteMessage(lastNodeStatusMsgId); } catch (e) {}
         }
