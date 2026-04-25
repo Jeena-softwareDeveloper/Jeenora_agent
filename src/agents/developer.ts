@@ -4,15 +4,37 @@ import { model } from "../config/llm";
 
 /**
  * Senior Developer Agent
- * Responsibility: Takes research data and implements the actual code.
+ * Now smarter: It analyzes Leads, Research, AND SEO data.
  */
 export async function seniorDeveloper(state: AgentStateType) {
-  console.log("--- STARTING SENIOR DEVELOPER ---");
-  const research = state.researchData;
+  console.log("--- 💻 STARTING SENIOR DEVELOPER ---");
   
+  const lastMessage = state.messages[state.messages.length - 1];
+  
+  const context = `
+    Business Context:
+    - Leads: ${state.leads.join(", ")}
+    - Business Research: ${state.researchData || "No technical research yet."}
+    - SEO Audit Data: ${state.seoData || "No SEO audit performed yet."}
+  `;
+
+  const systemPrompt = `
+    You are the Senior Developer for Jeenora.com. 
+    Analyze the provided context (Leads, Research, and SEO) and create a production-ready implementation plan.
+    
+    If SEO data is provided, focus on:
+    1. Technical fixes for the website.
+    2. How to implement the suggested keyword strategy.
+    3. Improving performance based on audit results.
+
+    Provide clean, documented code snippets or a detailed technical roadmap. 
+    Always follow Jeenora's premium branding.
+  `;
+
   const response = await model.invoke([
-    new SystemMessage("You are a Senior Software Engineer. Use the provided research data to write high-quality, production-ready code. Focus on best practices, performance, and clean code principles."),
-    new HumanMessage(`Research Data: ${research}\n\nBased on this research, please implement the solution.`),
+    new SystemMessage(systemPrompt),
+    new SystemMessage(context),
+    new HumanMessage(lastMessage.content.toString()),
   ]);
 
   return {
